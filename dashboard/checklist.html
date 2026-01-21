@@ -101,33 +101,8 @@
       </div>
     </header>
 
-    <div class="list">
-
-      <div class="item">
-        <div class="label">Driver’s License</div>
-        <div class="status complete">RECEIVED</div>
-      </div>
-
-      <div class="item">
-        <div class="label">Medical Card</div>
-        <div class="status missing">MISSING</div>
-      </div>
-
-      <div class="item">
-        <div class="label">W-9 Form</div>
-        <div class="status complete">RECEIVED</div>
-      </div>
-
-      <div class="item">
-        <div class="label">Insurance Documents</div>
-        <div class="status missing">MISSING</div>
-      </div>
-
-      <div class="item">
-        <div class="label">Signed Dispatch Agreement</div>
-        <div class="status complete">RECEIVED</div>
-      </div>
-
+    <div class="list" id="checklist">
+      Loading checklist…
     </div>
 
     <div class="footer">
@@ -136,10 +111,63 @@
     </div>
 
   </div>
-<script>
-  if (sessionStorage.getItem("lds_access") !== "granted") {
-    window.location.href = "gate.html";
-  }
-</script>
+
+  <script>
+    // 🔐 SECURITY: redirect if no access
+    if (sessionStorage.getItem("lds_access") !== "granted") {
+      window.location.href = "gate.html";
+    }
+
+    // Google Sheet JSON URL (replace /edit with /gviz/tq?tqx=out:json)
+    const sheetID = "1RUV1fa3QPfDCvUHlrLSkHKDSI75dlBFRb-tGP8lOhN8";
+    const sheetURL = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(text => {
+        // remove the extra function wrapper
+        const jsonData = JSON.parse(text.substr(47).slice(0,-2));
+        const rows = jsonData.table.rows;
+        const container = document.getElementById("checklist");
+        container.innerHTML = "";
+
+        rows.forEach(row => {
+          const name = row.c[0]?.v || "";
+          const license = row.c[1]?.v || "";
+          const medical = row.c[2]?.v || "";
+          const w9 = row.c[3]?.v || "";
+          const insurance = row.c[4]?.v || "";
+          const dispatchAgreement = row.c[5]?.v || "";
+
+          const items = [
+            {label: "Driver’s License", status: license},
+            {label: "Medical Card", status: medical},
+            {label: "W-9 Form", status: w9},
+            {label: "Insurance Documents", status: insurance},
+            {label: "Signed Dispatch Agreement", status: dispatchAgreement}
+          ];
+
+          const div = document.createElement("div");
+          div.classList.add("item-container");
+          div.innerHTML = `<h2 style="margin:0 0 10px 0;">${name}</h2>`;
+
+          items.forEach(i => {
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "item";
+            const statusClass = i.status.toLowerCase() === "complete" ? "complete" : "missing";
+            const displayText = i.status.toLowerCase() === "complete" ? "RECEIVED" : "MISSING";
+            itemDiv.innerHTML = `<div class="label">${i.label}</div><div class="status ${statusClass}">${displayText}</div>`;
+            div.appendChild(itemDiv);
+          });
+
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById("checklist").innerHTML = "Failed to load checklist.";
+        console.error(err);
+      });
+  </script>
+
 </body>
 </html>
