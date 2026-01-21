@@ -1,173 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Driver Checklist | Left Door Shut Dispatch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Driver Checklist | Left Door Shut Dispatch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(180deg, #020617, #0f172a);
-      color: #e5e7eb;
-      min-height: 100vh;
-    }
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: linear-gradient(180deg,#020617,#0f172a);
+  color: #e5e7eb;
+  padding: 20px;
+}
 
-    .container {
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 20px;
-    }
+.container {
+  max-width: 900px;
+  margin: auto;
+}
 
-    header {
-      background: #020617;
-      border-radius: 16px;
-      padding: 22px;
-      margin-bottom: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    }
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
 
-    h1 {
-      margin: 0;
-      font-size: 26px;
-      color: #f8fafc;
-    }
+.card {
+  background: #020617;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
 
-    .subtitle {
-      margin-top: 6px;
-      font-size: 14px;
-      color: #94a3b8;
-    }
+.driver-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
 
-    .list {
-      background: #020617;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.35);
-    }
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+}
 
-    .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 10px;
-      border-bottom: 1px solid #1e293b;
-    }
+.status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
 
-    .item:last-child {
-      border-bottom: none;
-    }
+.complete {
+  background: #22c55e;
+  color: #022c22;
+}
 
-    .label {
-      font-size: 15px;
-    }
+.missing {
+  background: #ef4444;
+  color: white;
+}
 
-    .status {
-      font-size: 13px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 999px;
-    }
-
-    .complete {
-      background: #022c22;
-      color: #4ade80;
-    }
-
-    .missing {
-      background: #2a0f14;
-      color: #f87171;
-    }
-
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      color: #64748b;
-      margin-top: 32px;
-    }
-  </style>
+a.doc {
+  color: #38bdf8;
+  font-size: 13px;
+  text-decoration: none;
+}
+</style>
 </head>
 
 <body>
+<div class="container">
+<h1>Driver Document Checklist</h1>
+<div id="drivers"></div>
+</div>
 
-  <div class="container">
+<script>
+const SHEET_ID = "1RUV1fa3QPfDCvUHlrLSkHKDSI75dlBFRb-tGP8lOhN8";
+const TAB_NAME = "Checklist";
 
-    <header>
-      <h1>Driver Checklist</h1>
-      <div class="subtitle">
-        Left Door Shut Dispatch • Compliance Status
+const URL = `https://opensheet.elk.sh/${SHEET_ID}/${TAB_NAME}`;
+
+fetch(URL)
+  .then(res => res.json())
+  .then(data => renderDrivers(data));
+
+function statusBlock(label, link) {
+  if (link && link.trim() !== "") {
+    return `
+      <div class="row">
+        <span>${label}</span>
+        <span class="status complete">RECEIVED</span>
+        <a class="doc" href="${link}" target="_blank">View</a>
+      </div>`;
+  } else {
+    return `
+      <div class="row">
+        <span>${label}</span>
+        <span class="status missing">MISSING</span>
+      </div>`;
+  }
+}
+
+function renderDrivers(drivers) {
+  const container = document.getElementById("drivers");
+
+  drivers.forEach(d => {
+    container.innerHTML += `
+      <div class="card">
+        <div class="driver-name">${d.Name}</div>
+        ${statusBlock("W-9", d["W9 Link"])}
+        ${statusBlock("CDL", d["CDL Link"])}
+        ${statusBlock("Insurance", d["Insurance Link"])}
       </div>
-    </header>
-
-    <div class="list" id="checklist">
-      Loading checklist…
-    </div>
-
-    <div class="footer">
-      © 2026 Left Door Shut Dispatch<br>
-      Internal driver compliance system
-    </div>
-
-  </div>
-
-  <script>
-    // 🔐 SECURITY: redirect if no access
-    if (sessionStorage.getItem("lds_access") !== "granted") {
-      window.location.href = "gate.html";
-    }
-
-    // Google Sheet JSON URL (replace /edit with /gviz/tq?tqx=out:json)
-    const sheetID = "1RUV1fa3QPfDCvUHlrLSkHKDSI75dlBFRb-tGP8lOhN8";
-    const sheetURL = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
-
-    fetch(sheetURL)
-      .then(res => res.text())
-      .then(text => {
-        // remove the extra function wrapper
-        const jsonData = JSON.parse(text.substr(47).slice(0,-2));
-        const rows = jsonData.table.rows;
-        const container = document.getElementById("checklist");
-        container.innerHTML = "";
-
-        rows.forEach(row => {
-          const name = row.c[0]?.v || "";
-          const license = row.c[1]?.v || "";
-          const medical = row.c[2]?.v || "";
-          const w9 = row.c[3]?.v || "";
-          const insurance = row.c[4]?.v || "";
-          const dispatchAgreement = row.c[5]?.v || "";
-
-          const items = [
-            {label: "Driver’s License", status: license},
-            {label: "Medical Card", status: medical},
-            {label: "W-9 Form", status: w9},
-            {label: "Insurance Documents", status: insurance},
-            {label: "Signed Dispatch Agreement", status: dispatchAgreement}
-          ];
-
-          const div = document.createElement("div");
-          div.classList.add("item-container");
-          div.innerHTML = `<h2 style="margin:0 0 10px 0;">${name}</h2>`;
-
-          items.forEach(i => {
-            const itemDiv = document.createElement("div");
-            itemDiv.className = "item";
-            const statusClass = i.status.toLowerCase() === "complete" ? "complete" : "missing";
-            const displayText = i.status.toLowerCase() === "complete" ? "RECEIVED" : "MISSING";
-            itemDiv.innerHTML = `<div class="label">${i.label}</div><div class="status ${statusClass}">${displayText}</div>`;
-            div.appendChild(itemDiv);
-          });
-
-          container.appendChild(div);
-        });
-      })
-      .catch(err => {
-        document.getElementById("checklist").innerHTML = "Failed to load checklist.";
-        console.error(err);
-      });
-  </script>
-
+    `;
+  });
+}
+</script>
 </body>
 </html>
