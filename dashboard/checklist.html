@@ -113,6 +113,22 @@ function statusRow(label, link) {
   }
 }
 
+function agreementStatus(label, value) {
+  if (value && value.trim().toLowerCase() === "yes") {
+    return `
+      <div class="row">
+        <div class="label">${label}</div>
+        <div class="status complete">SIGNED</div>
+      </div>`;
+  } else {
+    return `
+      <div class="row">
+        <div class="label">${label}</div>
+        <div class="status missing">MISSING</div>
+      </div>`;
+  }
+}
+
 function renderDrivers(drivers) {
   const container = document.getElementById("drivers");
 
@@ -120,9 +136,10 @@ function renderDrivers(drivers) {
     container.innerHTML += `
       <div class="card">
         <div class="driver-name">${d.Name || "Unnamed Driver"}</div>
-        ${statusRow("W-9", d["W9 Link"])}
-        ${statusRow("CDL", d["CDL Link"])}
-        ${statusRow("Insurance", d["Insurance Link"])}
+        ${statusRow("W-9", d["W9"])}
+        ${statusRow("CDL", d["License"])}
+        ${statusRow("Insurance", d["Insurance"])}
+        ${agreementStatus("Driver Agreement", d["Driver agreement  Signed?"])}
       </div>
     `;
   });
