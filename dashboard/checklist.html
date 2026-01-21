@@ -34,14 +34,18 @@ h1 {
 .driver-name {
   font-size: 20px;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   margin: 8px 0;
+}
+
+.label {
+  flex: 1;
 }
 
 .status {
@@ -71,33 +75,40 @@ a.doc {
 
 <body>
 <div class="container">
-<h1>Driver Document Checklist</h1>
-<div id="drivers"></div>
+  <h1>Driver Document Checklist</h1>
+  <div id="drivers"></div>
 </div>
 
 <script>
+/* === CONFIG === */
 const SHEET_ID = "1RUV1fa3QPfDCvUHlrLSkHKDSI75dlBFRb-tGP8lOhN8";
-const TAB_NAME = "Checklist";
+const TAB_NAME = "Operating Documents";
 
-const URL = `https://opensheet.elk.sh/${SHEET_ID}/${TAB_NAME}`;
+/* === DO NOT TOUCH BELOW === */
+const URL = `https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(TAB_NAME)}`;
 
 fetch(URL)
   .then(res => res.json())
-  .then(data => renderDrivers(data));
+  .then(data => renderDrivers(data))
+  .catch(err => {
+    document.getElementById("drivers").innerHTML =
+      "<p>Error loading driver data.</p>";
+    console.error(err);
+  });
 
-function statusBlock(label, link) {
+function statusRow(label, link) {
   if (link && link.trim() !== "") {
     return `
       <div class="row">
-        <span>${label}</span>
-        <span class="status complete">RECEIVED</span>
+        <div class="label">${label}</div>
+        <div class="status complete">RECEIVED</div>
         <a class="doc" href="${link}" target="_blank">View</a>
       </div>`;
   } else {
     return `
       <div class="row">
-        <span>${label}</span>
-        <span class="status missing">MISSING</span>
+        <div class="label">${label}</div>
+        <div class="status missing">MISSING</div>
       </div>`;
   }
 }
@@ -108,10 +119,10 @@ function renderDrivers(drivers) {
   drivers.forEach(d => {
     container.innerHTML += `
       <div class="card">
-        <div class="driver-name">${d.Name}</div>
-        ${statusBlock("W-9", d["W9 Link"])}
-        ${statusBlock("CDL", d["CDL Link"])}
-        ${statusBlock("Insurance", d["Insurance Link"])}
+        <div class="driver-name">${d.Name || "Unnamed Driver"}</div>
+        ${statusRow("W-9", d["W9 Link"])}
+        ${statusRow("CDL", d["CDL Link"])}
+        ${statusRow("Insurance", d["Insurance Link"])}
       </div>
     `;
   });
